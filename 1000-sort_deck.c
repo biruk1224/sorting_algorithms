@@ -1,115 +1,101 @@
 #include "deck.h"
-#include <stdio.h>
-/**
- *_strcmp - compare two strings
- *@str1: string
- *@str2: string
- *Return: 1 str1 and str2 is equal, 0 they are not equal
- */
-int _strcmp(const char *str1, char *str2)
-{
-	size_t i = 0;
 
-	if (str1 == '\0')
-		return (0);
-	while (str1[i])
-	{
-		if (str1[i] != str2[i])
-			return (0);
-		i++;
-	}
-	if (str1[i] == '\0' && str2[i])
-		return (0);
-	return (1);
-}
 /**
- * get_card_position - return the position based on card you put in
- * @node: represent the card
- * Return: return the card position
- */
-int get_card_position(deck_node_t *node)
+*swap - swaps 2 nodes in a doubly-linked list
+*@a: address of first node
+*@b: address of second node
+*
+*Return: void
+*/
+void swap(deck_node_t *a, deck_node_t *b)
 {
-	int value;
-
-	value = (*node).card->value[0] - '0';
-	if (value < 50 || value > 57)
-	{
-		if (_strcmp((*node).card->value, "Ace") == 1)
-			value = 1;
-		else if (_strcmp((*node).card->value, "10") == 1)
-			value = 10;
-		else if (_strcmp((*node).card->value, "Jack") == 1)
-			value = 11;
-		else if (_strcmp((*node).card->value, "Queen") == 1)
-			value = 12;
-		else if (_strcmp((*node).card->value, "King") == 1)
-			value = 13;
-	}
-	value += (*node).card->kind * 13;
-	return (value);
-}
-/**
- *swap_card - swap a card for his previous one
- *@card: card
- *@deck: card deck
- *Return: return a pointer to a card which was enter it
- */
-deck_node_t *swap_card(deck_node_t *card, deck_node_t **deck)
-{
-	deck_node_t *back = card->prev, *current = card;
-	/*NULL, 19, 48, 9, 71, 13, NULL*/
-
-	back->next = current->next;
-	if (current->next)
-		current->next->prev = back;
-	current->next = back;
-	current->prev = back->prev;
-	back->prev = current;
-	if (current->prev)
-		current->prev->next = current;
-	else
-		*deck = current;
-	return (current);
+	if (a->prev)
+		a->prev->next = b;
+	if (b->next)
+		b->next->prev = a;
+	a->next = b->next;
+	b->prev = a->prev;
+	a->prev = b;
+	b->next = a;
 }
 
 /**
- * insertion_sort_deck - function that sorts a doubly linked deck
- * of integers in ascending order using the Insertion sort algorithm
- * @deck: Dobule linked deck to sort
+ * insertion_sort_list - insertion sorts a doubly-linked list
+ * @list: address of pointer to head node
+ *
+ * Return: void
  */
-void insertion_sort_deck(deck_node_t **deck)
+void insertion_sort_list(deck_node_t **list)
 {
-	int value_prev, value_current;
-	deck_node_t *node;
+	deck_node_t *i, *j;
 
-	if (deck == NULL || (*deck)->next == NULL)
+	if (!list || !*list || !(*list)->next)
 		return;
-	node = (*deck)->next;
-	while (node)
+	i = (*list)->next;
+	while (i)
 	{
-		/* preparing the previous value */
-		if (node->prev)
+		j = i;
+		i = i->next;
+		while (j && j->prev)
 		{
-			value_prev = get_card_position((node->prev));
-			value_current = get_card_position(node);
+			if (less_than(j->prev->card, j->card))
+			{
+				swap(j->prev, j);
+				if (!j->prev)
+					*list = j;
+			}
+			else
+				j = j->prev;
 		}
-		while ((node->prev) && (value_prev > value_current))
-		{
-			value_prev = get_card_position((node->prev));
-			value_current = get_card_position(node);
-			node = swap_card(node, deck);
 
-		}
-		node = node->next;
 	}
 }
+
 /**
- * sort_deck - sort a deck you put in using
- * insertion sort algorithm
- * @deck: deck
- */
+* sort_deck - sorts the deck by a given sort function
+* @deck: address to pointer of head
+*
+*/
 void sort_deck(deck_node_t **deck)
 {
-	insertion_sort_deck(deck);
+	insertion_sort_list(deck);
 }
 
+/**
+* less_than - determines comparison order between two cards
+* @a: pointer of first card
+* @b: pointer of second card
+*
+* Return: true if a > b
+*/
+int less_than(const card_t *a, const card_t *b)
+{
+	char *s1, *s2, *values[] = {"King", "Queen", "Jack", "10", "9", "8",
+		"7", "6", "5", "4", "3", "2", "Ace"};
+	int val_a = 0, val_b = 0, i = 0;
+
+	for (i = 0; i < 13; i++)
+	{
+		for (s1 = (char *)a->value, s2 = values[i]; *s1 && *s1 == *s2; ++s1, ++s2)
+			;
+		if (*s1 == 0 && *s2 == 0)
+		{
+			val_a = i;
+			break;
+		}
+	}
+	for (i = 0; i < 13; i++)
+	{
+		for (s1 = (char *)b->value, s2 = values[i]; *s1 && *s1 == *s2; ++s1, ++s2)
+			;
+		if (*s1 == 0 && *s2 == 0)
+		{
+			val_b = i;
+			break;
+		}
+	}
+	if (a->kind == b->kind)
+		return (val_a < val_b);
+	return (a->kind > b->kind);
+
+}

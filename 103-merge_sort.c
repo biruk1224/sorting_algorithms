@@ -1,110 +1,83 @@
 #include "sort.h"
-#include <stdio.h>
+
 /**
- *_calloc - this is a calloc function
- *@nmemb: number of elemets
- *@size: bit size of each element
- *Return: pointer to memory assignement
+ * merge_compare - compares merges
+ * @array: the integer array to sort
+ * @start: the start index
+ * @stop: the stop index
+ * @new: the output array
+ *
+ * Return: void.
  */
-void *_calloc(unsigned int nmemb, unsigned int size)
+void merge_compare(int *array, size_t start, size_t stop, int *new)
 {
-	unsigned int i = 0;
-	char *p;
+	size_t i = start, j, k, mid;
 
-	if (nmemb == 0 || size == 0)
-		return ('\0');
-	p = malloc(nmemb * size);
-	if (p == '\0')
-		return ('\0');
-	for (i = 0; i < (nmemb * size); i++)
-		p[i] = '\0';
-	return (p);
-}
-/**
- *merge - make a merge
- *@arr: one from start to mid
- *@tmp: temp array used in merge, was created outside to
- *optimize reducing the system calls
- *@start: first element position
- *@mid: array middle
- *@end: last element position
- **/
-void merge(int *arr, int *tmp, int start, int mid, int end)
-{
-	/*  sizes and temp arrays */
-	int size_left = mid - start + 1, size_right = end - mid;
-	int *array_left, *array_right;
-	/* counters */
-	int left, right, i = 0;
-
-	array_left = &tmp[0];
-	array_right = &tmp[size_right];
-	for (left = 0; left < size_left; left++)
-		array_left[left] = arr[start + left];
-	for (right = 0; right < size_right; right++)
-		array_right[right] = arr[mid + 1 + right];
-	left = 0, right = 0, i = start;
-	/* merging tmp arrays into main array*/
-	while (left < size_left && right < size_right)
-	{
-		if (array_left[left] <= array_right[right])
-			arr[i] = array_left[left], left++;
-		else
-			arr[i] = array_right[right], right++;
-		i++;
-	}
-	/* merging remaining left array into main array*/
-	while (left < size_left)
-		arr[i] = array_left[left], left++, i++;
-	/* merging remaining right array into main array*/
-	while (right < size_right)
-		arr[i] = array_right[right], right++, i++;
+	j = mid = (start + stop) / 2;
 	printf("Merging...\n");
 	printf("[left]: ");
-	print_array(array_left, left);
+	print_array(array + start, mid - start);
 	printf("[right]: ");
-	print_array(array_right, right);
-	printf("[Done]: ");
-	print_array(&arr[start], left + right);
-}
-/**
- *mergesort - function that sorts an array of integers
- *in ascending order using the Merge sort algorithm
- *@array: array of integers
- *@tmp: temp array used in merge, was created outside to
- *optimize reducing the system calls
- *@start: fisrt element position
- *@end: last element position
- *Return: void
- */
-void mergesort(int *array, int *tmp, int start, int end)
-{
-	int mid;
+	print_array(array + mid, stop - mid);
+	for (k = start; k < stop; k++)
+		if (i < mid && (j >= stop || array[i] <= array[j]))
+		{
 
-	mid = (start + end) / 2;
-	if ((start + end) % 2 == 0)
-		mid--;
-	if (mid >= start)
-	{
-		mergesort(array, tmp, start, mid);
-		mergesort(array, tmp, mid + 1, end);
-		merge(array, tmp, start, mid, end);
-	}
+			new[k] = array[i++];
+		}
+		else
+		{
+			new[k] = array[j++];
+		}
+	printf("[Done]: ");
+	print_array(new + start, stop - start);
 }
+
 /**
- *merge_sort - function that sorts an array of integers
- *in ascending order using the Merge sort algorithm
- *@size: size of the list
- *@array: array of integers
- *Return: void
+ * merge_sort_top_down - sorts top-down recursively
+ * @array: the integer array to sort
+ * @start: the start index
+ * @stop: the stop index
+ * @new: the output array
+ *
+ * Return: void.
+ */
+void merge_sort_top_down(int *array, size_t start, size_t stop, int *new)
+{
+	size_t mid;
+
+	mid = (start + stop) / 2;
+	if (stop - start < 2)
+	{
+		return;
+	}
+	merge_sort_top_down(new, start, mid, array);
+	merge_sort_top_down(new, mid, stop, array);
+	merge_compare(new, start, stop, array);
+}
+
+
+/**
+ * merge_sort - sorts by merge sort algorithm
+ * @array: the integer array to sort
+ * @size: the size of the array
+ *
+ * Return: void.
  */
 void merge_sort(int *array, size_t size)
 {
-	int *tmp;
+	int *new;
+	size_t i;
+
 
 	if (!array || size < 2)
 		return;
-	tmp = _calloc(size, sizeof(int));
-	mergesort(array, tmp, 0, size - 1);
-	free(tmp);
+
+	new = malloc(sizeof(int) * size);
+	if (!new)
+		return;
+	for (i = 0; i < size; i++)
+		new[i] = array[i];
+	merge_sort_top_down(array, 0, size, new);
+	free(new);
 }
